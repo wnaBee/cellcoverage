@@ -1,29 +1,36 @@
-clear
+ clear
 close all
-Cellnum = 10;
-Towernum = 15;
+Cellnum = 1;
+Towernum = 2;
 
 [PhoneData TowerData, Distances] = Infogen(Cellnum, Towernum);
 SignalStrength = Dataflow(Distances);
 
-figure %map phones (blue) and towers (red) onto 2-D plot.
-scatter(PhoneData(:,1),PhoneData(:,2), 'b')
+%figure %map phones (blue) and towers (red) onto 2-D plot.
+%scatter(PhoneData(:,1),PhoneData(:,2), 'b')
+%hold on
+%scatter(TowerData(:,1), TowerData(:,2), 'r')
+
+%figure
+%bar(Distances, SignalStrength);
+
+disp([PhoneData, Distances, SignalStrength])
+figure
+scatter3(PhoneData(:,1),PhoneData(:,2), SignalStrength, 'b')
 hold on
-scatter(TowerData(:,1), TowerData(:,2), 'r')
+scatter3(TowerData(:,1), TowerData(:,2), ones(Towernum, 1)*70, 'r')
 
-%bar3(PhoneData(:,1), PhoneData(:,2), SignalStrength(:,1))
-%scatter3(Data(:,1),Data(:,2),SignalStrength)
-
-function [SignalStrength] = Dataflow(Distances) %calculate Signal strength
+function [Smax] = Dataflow(Distances) %calculate Signal strength
     %constants
     k = 4; 
     P = 1;
     B = 10;
     sigma = 10^(-11.2);
+    Smax = []
     SignalStrength = [];
     for j = 1:width(Distances) 
     %calculate signal strength for every phone, iterating over towers 
-        disp(j)
+        
         %Arrays
         R = [];
         Noise = [];
@@ -46,9 +53,13 @@ function [SignalStrength] = Dataflow(Distances) %calculate Signal strength
                             
             end
         end
-       SignalStrength = [SignalStrength R]; %generate matrix for all towers
+        SignalStrength = [SignalStrength R]; %generate matrix for all towers
     end
-    disp(SignalStrength)
+    for i = 1:height(SignalStrength)
+       Smax = [Smax; max(SignalStrength(i,:))]; 
+    end
+    
+    %disp(SignalStrength)
     return
 end
 
