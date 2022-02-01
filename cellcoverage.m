@@ -1,31 +1,72 @@
-function [] = cellcoverage(Cellnum, Towernum, Area)
+function [] = cellcoverage(mode, i1, i2, i3, i4, i5, i6, i7) 
+              %Number of phones, towers, side of area, 
+              %predetermined phone positions, tower positions
+              %bandwidth, P, sigma squared, Kappa
     close all
-    %Cellnum = 10000;
-    %Towernum = 200;
-    %Area = 10000;
-    [PhoneData, TowerData, Distances] = Infogen(Cellnum, Towernum, Area);
-    SignalStrength = Dataflow(Distances);
     
-    %figure %map phones (blue) and towers (red) onto 2-D plot.
-    %scatter(PhoneData(:,1),PhoneData(:,2), 'b')
-    %hold on
-    %scatter(TowerData(:,1), TowerData(:,2), 'r')
+    if mode == 0 %mode 0, generate a random set of phones and numbers
+        if nargin == 4
+            Cellnum = i1; %number of phones
+            Towernum = i2; %number of towers
+            Area = i3; %Side of Area
+            Kappa = 4; %interference exponent
+            P = 1; %Wattage
+            Bandwidth = 10; %Bandwidth
+            sigma2 = 10^(-11.2); %interfering wattage
+        elseif nargin == 8
+            Cellnum = i1;
+            Towernum = i2;
+            Area = i3;
+            Bandwidth = i4;
+            P = i5;
+            Sigma2 = i6;
+            Kappa = i7;
+        else 
+            error("you didn't provide correct numbers")
+        end
+        %generate coordinates for all towers and phones
+        [PhoneData, TowerData] = Infogen(Cellnum, Towernum, Area);
+    elseif mode == 1 %input specific coordinates for all data
+        if nargin == 3
+            PhoneData = i1; 
+            TowerData = i2;
+            Kappa = 4; 
+            P = 1;
+            Bandwidth = 10;
+            sigma2 = 10^(-11.2);
+        elseif nargin == 7
+            PhoneData = i1;
+            TowerData = i2;
+            Kappa = i3; 
+            P = i4;
+            Bandwidth = i5;
+            sigma2 = i6;
+        else
+            error('you dumbdumbd')
+        end
+        Towernum = height(TowerData);
+    end
     
-    %figure
-    %bar(Distances, SignalStrength);
+    Distances = DistanceCalc(PhoneData, TowerData)
+    SignalStrength = Dataflow(Distances, Kappa, P, Bandwidth, sigma2);
     
-    %disp([PhoneData, Distances, SignalStrength])
+       %draw all towers and phones
     figure
-    scatter3(PhoneData(:,1),PhoneData(:,2), SignalStrength, 'b')
+    scatter3(TowerData(:,1), TowerData(:,2), ...
+        ones(Towernum, 1)*70, 'r')
     hold on
-    scatter3(TowerData(:,1), TowerData(:,2), ones(Towernum, 1)*70, 'r')
-
-    function [Smax] = Dataflow(Distances) %calculate Signal strength
-        %constants
-        k = 4; 
-        P = 1;
-        B = 10;
-        sigma = 10^(-11.2);
+    scatter3(PhoneData(:,1),PhoneData(:,2), SignalStrength, 'b')
+    legend('Towers', 'Phones')
+    
+    function [Smax] = Dataflow(Distances, k, P, B, sigma) %calculate Signal strength
+        
+        if nargin == 1
+            %constants
+            
+        elseif nargin ~= 5
+            error('oops you did a stupid, plz fix (placeholder message)')            
+        end
+        
         Smax = [];
         SignalStrength = [];
         for j = 1:width(Distances) 
@@ -63,22 +104,38 @@ function [] = cellcoverage(Cellnum, Towernum, Area)
         return
     end
     
-    function [PhoneData, TowerData, Distances] = Infogen(Cellnum, Towernum, Area) %Generate the coordinates 
-                                                                          % of towers and phones
+    function [CellPos, TowerPos] = Infogen(Cellnum, Towernum, Area) 
+                                   %Generate the coordinates 
+                                   %of towers and phones
         CellPos = rand([Cellnum,2])*Area;
         TowerPos = rand([Towernum,2])*Area;
-        
-        %calculate distance between an arbitrary amount of towers and all phones
-        Dist= [];
-        for i = 1:Towernum
-            Dist = [Dist ((CellPos(:,1)-TowerPos(i,1)).^2 + (CellPos(:,2)-TowerPos(i,2)).^2).^(1/2)]; 
-            
-        end
-        
-        PhoneData = [CellPos]; %Export the data
-        TowerData = [TowerPos];
-        Distances = [Dist];
+               
         return
     end 
+    
+    function [Dist] = DistanceCalc(CellPos, TowerPos)
+        %calculate distance between an arbitrary
+        %amount of towers and all phones
+        
+        Dist= [];
+        for i = 1:height(TowerPos)
+            Dist = [Dist ((CellPos(:,1)-TowerPos(i,1)).^2 ...
+            + (CellPos(:,2)-TowerPos(i,2)).^2).^(1/2)]; 
+        end
+        return
+    end
+
 clear
 end
+
+
+%handy debug code
+%figure %map phones (blue) and towers (red) onto 2-D plot.
+%scatter(PhoneData(:,1),PhoneData(:,2), 'b')
+%hold on
+%scatter(TowerData(:,1), TowerData(:,2), 'r')
+   
+%figure
+%bar(Distances, SignalStrength);
+    
+%disp([PhoneData, Distances, SignalStrength])
